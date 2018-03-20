@@ -35,18 +35,23 @@ class Main extends PluginBase implements \pocketmine\event\Listener{
 
     public function onConsume(PlayerItemConsumeEvent $e){
         $player = $e->getPlayer();
-        if(isset($this->p[strtolower($player->getName())])){
+        if($e->getItem()->getId() == 322){
+          if(isset($this->p[strtolower($player->getName())])){
             $player->sendMessage(C::ITALIC. C::RED. "You're able to consume another Golden Apple in ". $this->cooldown->get(strtolower($player->getName())). " seconds.");
             $e->setCancelled();
-        }else{
-            if($e->getItem()->getId() == 322){
-                $this->addCooldown($player);
-                if($e->getItem()->getDamage() == 1){
-                    $this->addEnchantedCooldown($player);
-                }
-            }
+          }else{
+            $this->addCooldown($player);
+          }
         }
-    }
+        if($e->getItem()->getId() == 466){
+          if(isset($this->p[strtolower($player->getName())])){
+            $player->sendMessage(C::ITALIC. C::RED. "You're able to consume another Golden Apple in ". $this->cooldown->get(strtolower($player->getName())). " seconds.");
+            $e->setCancelled();
+          }else{
+            $this->addEnchantedCooldown($player);
+          }
+        }
+      }
 
     public function timer(){
         foreach($this->cooldown->getAll() as $player => $time){
