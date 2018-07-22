@@ -5,7 +5,7 @@ namespace captainduck\GappleCooldown;
 use captainduck\GappleCooldown\Main;
 use pocketmine\scheduler\Task;
 
-class Task extends Task{
+class CooldownTask extends Task{
 
     private $plugin;
 
