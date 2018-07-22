@@ -9,7 +9,7 @@ use pocketmine\{
 use pocketmine\utils\{
     Config, TextFormat as C
 };
-use captainduck\GappleCooldown\Task;
+use captainduck\GappleCooldown\CooldownTask;
 use pocketmine\event\player\PlayerItemConsumeEvent;
 
 class Main extends PluginBase implements \pocketmine\event\Listener{
@@ -18,7 +18,7 @@ class Main extends PluginBase implements \pocketmine\event\Listener{
 
     public function onEnable(){
         $this->getLogger()->info("GappleCooldown by CaptainDuck enabled!");
-        $this->getScheduler()->scheduleRepeatingTask(new Task($this, 25), 25);
+        $this->getScheduler()->scheduleRepeatingTask(new CooldownTask($this, 25), 25);
         $this->config = new Config($this->getDataFolder(). "config.yml", Config::YAML, array(
             "cooldown-seconds" => 10,
             "enchanted-cooldown-seconds" => 20
