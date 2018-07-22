@@ -18,7 +18,7 @@ class Main extends PluginBase implements \pocketmine\event\Listener{
 
     public function onEnable(){
         $this->getLogger()->info("GappleCooldown by CaptainDuck enabled!");
-        $this->getServer()->getScheduler()->scheduleRepeatingTask(new Task($this, 25), 25);
+        $this->getScheduler()->scheduleRepeatingTask(new Task($this, 25), 25);
         $this->config = new Config($this->getDataFolder(). "config.yml", Config::YAML, array(
             "cooldown-seconds" => 10,
             "enchanted-cooldown-seconds" => 20
