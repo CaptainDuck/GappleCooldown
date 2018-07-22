@@ -3,15 +3,14 @@
 namespace captainduck\GappleCooldown;
 
 use captainduck\GappleCooldown\Main;
-use pocketmine\scheduler\PluginTask;
+use pocketmine\scheduler\Task;
 
-class Task extends PluginTask{
+class Task extends Task{
 
     private $plugin;
 
     public function __construct(Main $plugin)
     {
-        parent::__construct($plugin);
         $this->plugin = $plugin;
     }
 
