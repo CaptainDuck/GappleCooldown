@@ -12,7 +12,10 @@ use pocketmine\event\player\PlayerItemConsumeEvent;
 
 class GappleCooldown extends PluginBase implements \pocketmine\event\Listener{
 
+    public static $instance = null;
+
     public function onEnable(){
+        self::$instance = $this;
         $this->getLogger()->info("GappleCooldown by CaptainDuck enabled!");
         $this->getScheduler()->scheduleRepeatingTask(new CooldownTask($this, 25), 25);
         $this->config = new Config($this->getDataFolder(). "config.yml", Config::YAML, array(
@@ -26,6 +29,10 @@ class GappleCooldown extends PluginBase implements \pocketmine\event\Listener{
         $this->getServer()->getPluginManager()->registerEvents($this, $this);
     }
 
+    public static function getInstance() : self {
+        return self::$instance;
+    }
+
     public function onDisable(){
         $this->config->save();
         $this->cooldown->save();
@@ -34,7 +41,7 @@ class GappleCooldown extends PluginBase implements \pocketmine\event\Listener{
     public function convertSeconds(int $seconds) : string {
         $hours = floor($seconds / 3600);
         $minutes = floor(($seconds / 60) % 60);
-        $seconds = $seconds % 60;
+        $seconds = $seconds % 60;   
         return "$hours:$minutes:$seconds";
     }
 
