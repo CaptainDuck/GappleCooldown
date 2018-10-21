@@ -21,7 +21,6 @@ class GappleCooldown extends PluginBase implements \pocketmine\event\Listener{
         $this->config = new Config($this->getDataFolder(). "config.yml", Config::YAML, array(
             "cooldown-seconds" => 10,
             "enchanted-cooldown-seconds" => 20,
-            "#Available variables: {TIME} - returns the cooldown time in h:i:s format, {NAME} - returns the player name.",
             "has-cooldown-message" => "You will be able to consume another golden apple in {TIME} minutes!"
         ));
         $this->cooldown = new Config($this->getDataFolder(). "cooldowns.yml", Config::YAML);
