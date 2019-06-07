@@ -7,7 +7,6 @@ use pocketmine\{
     Player, Server
 };
 use pocketmine\utils\Config;
-use captainduck\GappleCooldown\CooldownTask;
 use pocketmine\event\player\PlayerItemConsumeEvent;
 
 class GappleCooldown extends PluginBase implements \pocketmine\event\Listener{
@@ -17,13 +16,8 @@ class GappleCooldown extends PluginBase implements \pocketmine\event\Listener{
     public function onEnable(){
         self::$instance = $this;
         $this->getLogger()->info("GappleCooldown by CaptainDuck enabled!");
-        $this->getScheduler()->scheduleRepeatingTask(new CooldownTask($this, 25), 25);
-        $this->config = new Config($this->getDataFolder(). "config.yml", Config::YAML, array(
-            "cooldown-seconds" => 10,
-            "enchanted-cooldown-seconds" => 20,
-            "has-cooldown-message" => "You will be able to consume another golden apple in {TIME} minutes!"
-        ));
         $this->cooldown = new Config($this->getDataFolder(). "cooldowns.yml", Config::YAML);
+        $this->ecooldown = new Config($this->getDataFolder(). "enchantcooldowns.yml", Config::YAML); // for egapple cooldowns
         @mkdir($this->getDataFolder());
         $this->getServer()->getPluginManager()->registerEvents($this, $this);
     }
@@ -37,15 +31,31 @@ class GappleCooldown extends PluginBase implements \pocketmine\event\Listener{
         $this->cooldown->save();
     }
 
-    public function convertSeconds(int $seconds) : string {
-        $hours = floor($seconds / 3600);
-        $minutes = floor(($seconds / 60) % 60);
-        $seconds = $seconds % 60;   
-        return "$hours:$minutes:$seconds";
+    public function convertSeconds($time) {
+        if($time >= 60) {
+            $mins = $time / 60;
+            $minutes = floor($mins);
+            $secs = $mins - $minutes;
+            $seconds = floor($secs * 60);
+
+            if($minutes >= 60) {
+                $hrs = $minutes / 60;
+                $hours = floor($hrs);
+                $mins = $hrs - $hours;
+                $minutes = floor($mins * 60);
+                return $hours . "h " . $minutes . "m " . $seconds . "s";
+            } else {
+                return $minutes . "m " . $seconds . "s";
+            }
+        } else {
+            return $time . "s";
+        }
     }
 
-    public function formatMessage(string $message, $player) : string {
-        $message = str_replace("{TIME}", $this->getCooldownTime($player), $message);
+    public function formatMessage(string $message, $player, $enchanted = false) : string {
+        $time = $enchanted ? $this->getCooldownTime($player) : $this->getEnchantedCooldownTime($player);
+        $time = $this->convertSeconds($time);
+        $message = str_replace("{TIME}", $time, $message);
         $message = str_replace("{NAME}", $player->getName(), $message);
         return $message;
     }
@@ -53,54 +63,82 @@ class GappleCooldown extends PluginBase implements \pocketmine\event\Listener{
     public function onConsume(PlayerItemConsumeEvent $e){
         $player = $e->getPlayer();
         if($e->getItem()->getId() == 322){
-          if($this->hasCooldown($player)){
-            $player->sendMessage($this->formatMessage($this->config->get("has-cooldown-message"), $player));
-            $e->setCancelled();
-          }else{
-            $this->addCooldown($player);
-          }
-        }
-        if($e->getItem()->getId() == 466){
-          if($this->hasCooldown($player)){
-            $player->sendMessage($this->formatMessage($this->config->get("has-cooldown-message"), $player));
-            $e->setCancelled();
-          }else{
-            $this->addEnchantedCooldown($player);
-          }
-        }
-      }
-
-    public function timer(){
-        foreach($this->cooldown->getAll() as $player => $time){
-		    $time--;
-		    $this->cooldown->set($player, $time);
-		    $this->cooldown->save();
-		    if($time == 0){
-		        $this->cooldown->remove($player);
-			    $this->cooldown->save();
+            if($this->hasCooldown($player)){
+                $player->sendMessage($this->formatMessage($this->config->get("has-cooldown-message"), $player));
+                $e->setCancelled();
+            }else{
+                $this->addCooldown($player);
+             }
+            }
+            if($e->getItem()->getId() == 466){
+            if($this->hasEnchantedCooldown($player)){
+                $player->sendMessage($this->formatEnchantedMessage($this->config->get("has-cooldown-message"), $player));
+                $e->setCancelled();
+            }else{
+                $this->addEnchantedCooldown($player);
             }
         }
     }
 
-    public function hasCooldown($player){
-        return $this->cooldown->exists($player->getLowerCaseName());
+    public function hasCooldown($player) : bool {
+        if($this->cooldown->exists($player->getLowerCaseName())){
+            if(microtime(true) >= $this->cooldown->get($player->getLowerCaseName())){
+                $this->removeCooldown($player);
+                return false;
+            }else{
+                return false;
+            }
+        }else{
+            return false; // doesn't have a cooldown set
+        }
     }
 
-    public function getCooldownSeconds($player){
-        return $this->cooldown->get($player->getLowerCaseName());
+    public function hasEnchantedCooldown($player) : bool {
+        if($this->ecooldown->exists($player->getLowerCaseName())){
+            if(microtime(true) >= $this->ecooldown->get($player->getLowerCaseName())){
+                $this->removeEnchantedCooldown($player);
+                return false;
+            }else{
+                return true;
+            }
+        }else{
+            return false; // doesn't have a cooldown set
+        }
+    }
+
+    public function removeCooldown(Player $player){
+        $this->cooldown->remove($player->getLowerCaseName());
+        $this->cooldown->save();
+    }
+
+    public function removeEnchantedCooldown(Player $player){
+        $this->ecooldown->remove($player->getLowerCaseName());
+        $this->ecooldown->save();
+    }
+
+    public function getCooldownSeconds(Player $player){
+        return $this->cooldown->get($player->getLowerCaseName()) - microtime(true);
     }
 
     public function getCooldownTime($player){
         return $this->convertSeconds($this->getCooldownSeconds($player));
     }
 
+    public function getEnchantedCooldownSeconds($player){
+        return $this->ecooldown->get($player->getLowerCaseName()) - microtime(true);
+    }
+
+    public function getEnchantedCooldownTime($player){
+        return $this->convertSeconds($this->getEnchantedCooldownSeconds($player));
+    }
+
     public function addCooldown($player){
-        $this->cooldown->set($player->getLowerCaseName(), $this->config->get("cooldown-seconds"));
+        $this->cooldown->set($player->getLowerCaseName(), microtime(true) + $this->getConfig()->get("cooldown-seconds"));
         $this->cooldown->save();
     }
 
     public function addEnchantedCooldown($player){
-        $this->cooldown->set($player->getLowerCaseName(), $this->config->get("enchanted-cooldown-seconds"));
-        $this->cooldown->save();
+        $this->ecooldown->set($player->getLowerCaseName(), microtime(true) + $this->getConfig()->get("enchanted-cooldown-seconds"));
+        $this->ecooldown->save();
     }
 }

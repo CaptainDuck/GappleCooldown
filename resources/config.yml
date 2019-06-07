@@ -1,0 +1,5 @@
+---
+"cooldown-seconds": 10
+"enchanted-cooldown-seconds": 20
+"has-cooldown-message": "You will be able to consume another golden apple in {TIME} minutes!"
+...
