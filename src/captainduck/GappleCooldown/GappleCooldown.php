@@ -43,7 +43,7 @@ class GappleCooldown extends PluginBase implements \pocketmine\event\Listener{
                 return $minutes . "m " . $seconds . "s";
             }
         } else {
-            return $time . "s";
+            return ceil($time) . "s";
         }
     }
 
@@ -59,7 +59,7 @@ class GappleCooldown extends PluginBase implements \pocketmine\event\Listener{
         $player = $e->getPlayer();
         if($e->getItem()->getId() == 322){
             if($this->hasCooldown($player)){
-                $player->sendMessage($this->formatMessage($this->config->get("has-cooldown-message"), $player));
+                $player->sendMessage($this->formatMessage($this->getConfig()->get("has-cooldown-message"), $player));
                 $e->setCancelled();
             }else{
                 $this->addCooldown($player);
@@ -67,7 +67,7 @@ class GappleCooldown extends PluginBase implements \pocketmine\event\Listener{
             }
             if($e->getItem()->getId() == 466){
             if($this->hasEnchantedCooldown($player)){
-                $player->sendMessage($this->formatEnchantedMessage($this->config->get("has-cooldown-message"), $player));
+                $player->sendMessage($this->formatMessage($this->getConfig()->get("has-cooldown-message"), $player));
                 $e->setCancelled();
             }else{
                 $this->addEnchantedCooldown($player);
