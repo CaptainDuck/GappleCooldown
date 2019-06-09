@@ -26,11 +26,6 @@ class GappleCooldown extends PluginBase implements \pocketmine\event\Listener{
         return self::$instance;
     }
 
-    public function onDisable(){
-        $this->config->save();
-        $this->cooldown->save();
-    }
-
     public function convertSeconds($time) {
         if($time >= 60) {
             $mins = $time / 60;
